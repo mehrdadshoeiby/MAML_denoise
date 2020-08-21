@@ -56,7 +56,8 @@ class clothing_dataset(Dataset):
             target = self.test_labels[img_path]
         elif self.mode=='val':
             img_path = self.val_imgs[index]
-            target = self.test_labels[img_path]            
+            target = self.test_labels[img_path]
+        #print('image path is:\n\n ', img_path)
         image = Image.open(img_path).convert('RGB')    
         img = self.transform(image)
         return img, target

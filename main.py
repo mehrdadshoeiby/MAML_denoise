@@ -31,7 +31,7 @@ parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--alpha', default=1, type=int)
 parser.add_argument('--eps', default=0.99, type=float, help='Running average of model weights')
 parser.add_argument('--seed', default=123)
-parser.add_argument('--gpuid', default=1, type=int)
+parser.add_argument('--gpuid', default=0, type=int)
 parser.add_argument('--id', default='MLNT')
 parser.add_argument('--checkpoint', default='cross_entropy')
 args = parser.parse_args()
@@ -128,16 +128,18 @@ def train(epoch):
             
             meta_loss.backward()
                 
-        optimizer.step() # Optimizer update
-
-        train_loss += class_loss.data[0]      
+        #optimizer.step() # Optimizer update
+        print(class_loss.data)
+        train_loss += class_loss.data.item()      
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
         sys.stdout.write('\r')
         sys.stdout.write('| Epoch [%3d/%3d] Iter[%3d/%3d]\t\tLoss: %.4f Acc@1: %.3f%%'
-                %(epoch, args.num_epochs, batch_idx+1, (len(train_loader.dataset)//args.batch_size)+1, class_loss.data[0], 100.*correct/total))
+                %(epoch, args.num_epochs, batch_idx+1,
+                    (len(train_loader.dataset)//args.batch_size)+1,
+                    class_loss.data.item(), 100.*correct/total))
         sys.stdout.flush()
         if batch_idx%1000==0:
             val(epoch,batch_idx)
@@ -159,14 +161,14 @@ def val(epoch,iteration):
         outputs = net(inputs)
         loss = criterion(outputs, targets)
 
-        val_loss += loss.data[0]
+        val_loss += loss.data.item()
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
     # Save checkpoint when best model
     acc = 100.*correct/total
-    print("\n| Validation Epoch #%d Batch #%3d\t\t\tLoss: %.4f Acc@1: %.2f%%" %(epoch, iteration, loss.data[0], acc))
+    print("\n| Validation Epoch #%d Batch #%3d\t\t\tLoss: %.4f Acc@1: %.2f%%" %(epoch, iteration, loss.data.item(), acc))
     record.write('Epoch #%d Batch #%3d  Acc: %.2f' %(epoch,iteration,acc))
     if acc > best:
         best = acc
@@ -190,14 +192,14 @@ def val_tch(epoch,iteration):
         outputs = tch_net(inputs)
         loss = criterion(outputs, targets)
 
-        val_loss += loss.data[0]
+        val_loss += loss.data.item()
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
     # Save checkpoint when best model
     acc = 100.*correct/total
-    print("| tch Validation Epoch #%d Batch #%3d\t\t\tLoss: %.4f Acc@1: %.2f%%\n" %(epoch, iteration, loss.data[0], acc))
+    print("| tch Validation Epoch #%d Batch #%3d\t\t\tLoss: %.4f Acc@1: %.2f%%\n" %(epoch, iteration, loss.data.item(), acc))
     record.write(' | tchAcc: %.2f\n' %acc)
     record.flush()
     if acc > best:
@@ -221,7 +223,7 @@ def test():
         outputs = test_net(inputs)
         loss = criterion(outputs, targets)
 
-        test_loss += loss.data[0]
+        test_loss += loss.data.item()
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
@@ -255,9 +257,9 @@ pretrain_net.fc = nn.Linear(2048,14)
 test_net = models.resnet50(pretrained=True)
 test_net.fc = nn.Linear(2048,14)
 
-print('| load pretrain from checkpoint...')
-checkpoint = torch.load('./checkpoint/%s.pth.tar'%args.checkpoint)
-pretrain_net.load_state_dict(checkpoint['state_dict'])
+#print('| load pretrain from checkpoint...')
+#checkpoint = torch.load('./checkpoint/%s.pth.tar'%args.checkpoint)
+#pretrain_net.load_state_dict(checkpoint['state_dict'])
 
 if use_cuda:
     net.cuda()

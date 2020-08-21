@@ -1,0 +1,5 @@
+learning rate: 0.000800
+batch size: 32.000000
+start iter: 500
+mid iter: 2000
+Epoch #1 Batch #  0  Acc: 9.00 | tchAcc: 7.00
